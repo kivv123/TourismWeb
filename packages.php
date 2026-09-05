@@ -1,1 +1,71 @@
-<?php $pageTitle='Travel Packages';require 'includes/header.php';$q=trim($_GET['q']??'');$dest=(int)($_GET['destination']??0);$type=trim($_GET['type']??'');$price=trim($_GET['price']??'');$duration=trim($_GET['duration']??'');$w=["p.status='active'"];$a=[];if($q!==''){$w[]='(p.package_name LIKE ? OR d.name LIKE ?)';$a=["%$q%","%$q%"];}if($dest){$w[]='p.destination_id=?';$a[]=$dest;}if($type!==''){$w[]='p.package_type=?';$a[]=$type;}if($price==='under')$w[]='p.price_per_person <100000';if($price==='mid')$w[]='p.price_per_person BETWEEN 100000 AND 300000';if($price==='high')$w[]='p.price_per_person >300000';if($duration==='short')$w[]='p.duration_days BETWEEN 1 AND 2';if($duration==='medium')$w[]='p.duration_days BETWEEN 3 AND 5';if($duration==='long')$w[]='p.duration_days>=6';$s=db()->prepare('SELECT p.*,d.name destination_name FROM packages p JOIN destinations d ON d.destination_id=p.destination_id WHERE '.implode(' AND ',$w).' ORDER BY p.created_at DESC');$s->execute($a);$items=$s->fetchAll();$dests=db()->query("SELECT destination_id,name FROM destinations WHERE status='active' ORDER BY name")->fetchAll();$types=db()->query("SELECT DISTINCT package_type FROM packages WHERE status='active' ORDER BY package_type")->fetchAll(); ?><section class="detail-hero"><div class="container"><p class="section-kicker text-warning">Curated experiences</p><h1>Travel packages</h1></div></section><div class="container py-5"><form class="card card-body mb-4" method="get"><div class="row g-2"><div class="col-lg-3"><input class="form-control" name="q" value="<?=e($q)?>" placeholder="Search packages"></div><div class="col-lg-2"><select class="form-select" name="destination"><option value="">All destinations</option><?php foreach($dests as $d):?><option value="<?=$d['destination_id']?>" <?=$dest===$d['destination_id']?'selected':''?>><?=e($d['name'])?></option><?php endforeach;?></select></div><div class="col-lg-2"><select class="form-select" name="type"><option value="">All types</option><?php foreach($types as $t):?><option <?=$type===$t['package_type']?'selected':''?>><?=e($t['package_type'])?></option><?php endforeach;?></select></div><div class="col-lg-2"><select class="form-select" name="price"><option value="">Any price</option><option value="under">Under 100k</option><option value="mid">100k–300k</option><option value="high">Above 300k</option></select></div><div class="col-lg-2"><select class="form-select" name="duration"><option value="">Any duration</option><option value="short">1–2 days</option><option value="medium">3–5 days</option><option value="long">6+ days</option></select></div><div class="col-lg-1 d-grid"><button class="btn btn-primary">Go</button></div></div></form><div class="row g-4"><?php foreach($items as $p):?><div class="col-md-6 col-lg-4"><div class="card min-vh-card"><?php if($p['image']):?><img src="<?=url($p['image'])?>" class="card-img-top" alt=""><?php else:?><div class="placeholder-image"><i class="bi bi-map"></i></div><?php endif;?><div class="card-body d-flex flex-column"><span class="badge text-bg-light align-self-start"><?=e($p['package_type'])?></span><h4 class="mt-2"><?=e($p['package_name'])?></h4><p class="text-muted"><?=e($p['destination_name'])?> · <?=e($p['duration_days'])?> days / <?=e($p['duration_nights'])?> nights</p><h5 class="text-primary"><?=money($p['price_per_person'])?></h5><a class="btn btn-primary mt-auto" href="<?=url('package-details.php?id='.$p['package_id'])?>">Details & booking</a></div></div></div><?php endforeach;?></div></div><?php require 'includes/footer.php'; ?>
+<?php $pageTitle = 'Travel Packages';
+require 'includes/header.php';
+$q = trim($_GET['q'] ?? '');
+$dest = (int)($_GET['destination'] ?? 0);
+$type = trim($_GET['type'] ?? '');
+$price = trim($_GET['price'] ?? '');
+$duration = trim($_GET['duration'] ?? '');
+$w = ["p.status='active'"];
+$a = [];
+if ($q !== '') {
+    $w[] = '(p.package_name LIKE ? OR d.name LIKE ?)';
+    $a = ["%$q%", "%$q%"];
+}
+if ($dest) {
+    $w[] = 'p.destination_id=?';
+    $a[] = $dest;
+}
+if ($type !== '') {
+    $w[] = 'p.package_type=?';
+    $a[] = $type;
+}
+if ($price === 'under') $w[] = 'p.price_per_person <100000';
+if ($price === 'mid') $w[] = 'p.price_per_person BETWEEN 100000 AND 300000';
+if ($price === 'high') $w[] = 'p.price_per_person >300000';
+if ($duration === 'short') $w[] = 'p.duration_days BETWEEN 1 AND 2';
+if ($duration === 'medium') $w[] = 'p.duration_days BETWEEN 3 AND 5';
+if ($duration === 'long') $w[] = 'p.duration_days>=6';
+$s = db()->prepare('SELECT p.*,d.name destination_name FROM packages p JOIN destinations d ON d.destination_id=p.destination_id WHERE ' . implode(' AND ', $w) . ' ORDER BY p.created_at DESC');
+$s->execute($a);
+$items = $s->fetchAll();
+$dests = db()->query("SELECT destination_id,name FROM destinations WHERE status='active' ORDER BY name")->fetchAll();
+$types = db()->query("SELECT DISTINCT package_type FROM packages WHERE status='active' ORDER BY package_type")->fetchAll(); ?><section class="detail-hero">
+    <div class="container">
+        <p class="section-kicker text-warning">Curated experiences</p>
+        <h1>Travel packages</h1>
+    </div>
+</section>
+<div class="container py-5">
+    <form class="card card-body mb-4" method="get">
+        <div class="row g-2">
+            <div class="col-lg-3"><input class="form-control" name="q" value="<?= e($q) ?>" placeholder="Search packages"></div>
+            <div class="col-lg-2"><select class="form-select" name="destination">
+                    <option value="">All destinations</option><?php foreach ($dests as $d): ?><option value="<?= $d['destination_id'] ?>" <?= $dest === $d['destination_id'] ? 'selected' : '' ?>><?= e($d['name']) ?></option><?php endforeach; ?>
+                </select></div>
+            <div class="col-lg-2"><select class="form-select" name="type">
+                    <option value="">All types</option><?php foreach ($types as $t): ?><option <?= $type === $t['package_type'] ? 'selected' : '' ?>><?= e($t['package_type']) ?></option><?php endforeach; ?>
+                </select></div>
+            <div class="col-lg-2"><select class="form-select" name="price">
+                    <option value="">Any price</option>
+                    <option value="under">Under 100k</option>
+                    <option value="mid">100k–300k</option>
+                    <option value="high">Above 300k</option>
+                </select></div>
+            <div class="col-lg-2"><select class="form-select" name="duration">
+                    <option value="">Any duration</option>
+                    <option value="short">1–2 days</option>
+                    <option value="medium">3–5 days</option>
+                    <option value="long">6+ days</option>
+                </select></div>
+            <div class="col-lg-1 d-grid"><button class="btn btn-primary">Go</button></div>
+        </div>
+    </form>
+    <div class="row g-4"><?php foreach ($items as $p): ?><div class="col-md-6 col-lg-4">
+                <div class="card min-vh-card"><?php if ($p['image']): ?><img src="<?= url($p['image']) ?>" class="card-img-top" alt=""><?php else: ?><div class="placeholder-image"><i class="bi bi-map"></i></div><?php endif; ?><div class="card-body d-flex flex-column"><span class="badge text-bg-light align-self-start"><?= e($p['package_type']) ?></span>
+                        <h4 class="mt-2"><?= e($p['package_name']) ?></h4>
+                        <p class="text-muted"><?= e($p['destination_name']) ?> · <?= e($p['duration_days']) ?> days / <?= e($p['duration_nights']) ?> nights</p>
+                        <h5 class="text-primary"><?= money($p['price_per_person']) ?></h5><a class="btn btn-primary mt-auto" href="<?= url('package-details.php?id=' . $p['package_id']) ?>">Details & booking</a>
+                    </div>
+                </div>
+            </div><?php endforeach; ?></div>
+</div><?php require 'includes/footer.php'; ?>

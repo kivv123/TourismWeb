@@ -1,1 +1,51 @@
-<?php require '../includes/auth.php';require_role('admin');if($_SERVER['REQUEST_METHOD']==='POST'){verify_csrf();$id=(int)post('payment_id');$status=post('payment_status');if(in_array($status,['Pending','Paid','Failed','Refunded'],true)){ $pdo=db();$s=$pdo->prepare('SELECT booking_id FROM payments WHERE payment_id=?');$s->execute([$id]);$bid=$s->fetchColumn();$pdo->prepare('UPDATE payments SET payment_status=?,paid_at=IF(?=\'Paid\',NOW(),paid_at) WHERE payment_id=?')->execute([$status,$status,$id]);if($status==='Paid')$pdo->prepare("UPDATE bookings SET booking_status=IF(booking_status='Pending','Confirmed',booking_status) WHERE booking_id=?")->execute([$bid]);flash('success','Payment updated.');}redirect('admin/payments.php');}$rows=db()->query('SELECT py.*,b.total_amount,u.name customer_name,p.package_name FROM payments py JOIN bookings b ON b.booking_id=py.booking_id JOIN customers c ON c.customer_id=b.customer_id JOIN users u ON u.user_id=c.user_id JOIN packages p ON p.package_id=b.package_id ORDER BY py.created_at DESC')->fetchAll();$pageTitle='Payment verification';require '../includes/header.php';?><div class="container py-5"><h2>Payment verification</h2><div class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Booking</th><th>Customer</th><th>Amount</th><th>Method/reference</th><th>Status</th><th></th></tr></thead><tbody><?php foreach($rows as $r):?><tr><td>#<?=$r['booking_id']?><br><?=e($r['package_name'])?></td><td><?=e($r['customer_name'])?></td><td><?=money($r['amount'])?></td><td><?=e($r['payment_method'])?><br><small><?=e($r['transaction_reference']?:'—')?></small></td><td><?=status_badge($r['payment_status'])?></td><td><form method="post" class="d-flex gap-1"><?=csrf_field()?><input type="hidden" name="payment_id" value="<?=$r['payment_id']?>"><select name="payment_status" class="form-select form-select-sm"><?php foreach(['Pending','Paid','Failed','Refunded'] as $x):?><option <?=$r['payment_status']===$x?'selected':''?>><?=$x?></option><?php endforeach;?></select><button class="btn btn-sm btn-primary">Save</button></form></td></tr><?php endforeach;if(!$rows):?><tr><td colspan="6" class="text-center py-4">No payment records yet.</td></tr><?php endif;?></tbody></table></div></div></div><?php require '../includes/footer.php'; ?>
+<?php require '../includes/auth.php';
+require_role('admin');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $id = (int)post('payment_id');
+    $status = post('payment_status');
+    if (in_array($status, ['Pending', 'Paid', 'Failed', 'Refunded'], true)) {
+        $pdo = db();
+        $s = $pdo->prepare('SELECT booking_id FROM payments WHERE payment_id=?');
+        $s->execute([$id]);
+        $bid = $s->fetchColumn();
+        $pdo->prepare('UPDATE payments SET payment_status=?,paid_at=IF(?=\'Paid\',NOW(),paid_at) WHERE payment_id=?')->execute([$status, $status, $id]);
+        if ($status === 'Paid') $pdo->prepare("UPDATE bookings SET booking_status=IF(booking_status='Pending','Confirmed',booking_status) WHERE booking_id=?")->execute([$bid]);
+        flash('success', 'Payment updated.');
+    }
+    redirect('admin/payments.php');
+}
+$rows = db()->query('SELECT py.*,b.total_amount,u.name customer_name,p.package_name FROM payments py JOIN bookings b ON b.booking_id=py.booking_id JOIN customers c ON c.customer_id=b.customer_id JOIN users u ON u.user_id=c.user_id JOIN packages p ON p.package_id=b.package_id ORDER BY py.created_at DESC')->fetchAll();
+$pageTitle = 'Payment verification';
+require '../includes/header.php'; ?><div class="container py-5">
+    <h2>Payment verification</h2>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Method/reference</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody><?php foreach ($rows as $r): ?><tr>
+                            <td>#<?= $r['booking_id'] ?><br><?= e($r['package_name']) ?></td>
+                            <td><?= e($r['customer_name']) ?></td>
+                            <td><?= money($r['amount']) ?></td>
+                            <td><?= e($r['payment_method']) ?><br><small><?= e($r['transaction_reference'] ?: '—') ?></small></td>
+                            <td><?= status_badge($r['payment_status']) ?></td>
+                            <td>
+                                <form method="post" class="d-flex gap-1"><?= csrf_field() ?><input type="hidden" name="payment_id" value="<?= $r['payment_id'] ?>"><select name="payment_status" class="form-select form-select-sm"><?php foreach (['Pending', 'Paid', 'Failed', 'Refunded'] as $x): ?><option <?= $r['payment_status'] === $x ? 'selected' : '' ?>><?= $x ?></option><?php endforeach; ?></select><button class="btn btn-sm btn-primary">Save</button></form>
+                            </td>
+                        </tr><?php endforeach;
+                            if (!$rows): ?><tr>
+                            <td colspan="6" class="text-center py-4">No payment records yet.</td>
+                        </tr><?php endif; ?></tbody>
+            </table>
+        </div>
+    </div>
+</div><?php require '../includes/footer.php'; ?>

@@ -1,1 +1,82 @@
-<?php require '../includes/auth.php';require_role('hotel');$hid=get_entity_id('hotel',(int)current_user()['user_id']);$errors=[];$edit=null;if(isset($_GET['edit'])){$s=db()->prepare('SELECT * FROM rooms WHERE room_id=? AND hotel_id=?');$s->execute([(int)$_GET['edit'],$hid]);$edit=$s->fetch();}if($_SERVER['REQUEST_METHOD']==='POST'){verify_csrf();$action=post('action');$rid=(int)post('room_id');if($action==='delete')db()->prepare("UPDATE rooms SET status='inactive' WHERE room_id=? AND hotel_id=?")->execute([$rid,$hid]);else{$type=post('room_type');$desc=post('description');$cap=(int)post('capacity');$price=(float)post('price_per_night');$total=(int)post('total_rooms');$available=(int)post('available_rooms');if(!$type||$cap<1||$price<=0||$total<1||$available<0||$available>$total)$errors[]='Enter valid room values.';else if($action==='save')db()->prepare('UPDATE rooms SET room_type=?,description=?,capacity=?,price_per_night=?,total_rooms=?,available_rooms=?,status=? WHERE room_id=? AND hotel_id=?')->execute([$type,$desc,$cap,$price,$total,$available,post('status','active'),$rid,$hid]);else db()->prepare('INSERT INTO rooms(hotel_id,room_type,description,capacity,price_per_night,total_rooms,available_rooms) VALUES(?,?,?,?,?,?,?)')->execute([$hid,$type,$desc,$cap,$price,$total,$available]);if(!$errors){flash('success','Room saved.');redirect('hotel/rooms.php');}}}$s=db()->prepare('SELECT * FROM rooms WHERE hotel_id=? ORDER BY status,room_type');$s->execute([$hid]);$rows=$s->fetchAll();$pageTitle='Room management';require '../includes/header.php';?><div class="container py-5"><div class="row g-4"><div class="col-lg-5"><div class="card card-body"><h3><?= $edit?'Edit room':'Add room type' ?></h3><?php foreach($errors as $e):?><div class="alert alert-danger"><?=e($e)?></div><?php endforeach;?><form method="post"><?=csrf_field()?><input type="hidden" name="action" value="<?=$edit?'save':'create'?>"><input type="hidden" name="room_id" value="<?=$edit['room_id']??''?>"><div class="mb-2"><label class="form-label">Room type</label><input class="form-control" name="room_type" required value="<?=e($edit['room_type']??'')?>"></div><div class="mb-2"><label class="form-label">Description</label><textarea class="form-control" name="description"><?=e($edit['description']??'')?></textarea></div><div class="row g-2"><div class="col"><label class="form-label">Capacity</label><input class="form-control" type="number" min="1" name="capacity" value="<?=e($edit['capacity']??2)?>"></div><div class="col"><label class="form-label">Price/night</label><input class="form-control" type="number" min="1" name="price_per_night" value="<?=e($edit['price_per_night']??'')?>"></div></div><div class="row g-2 mt-1"><div class="col"><label class="form-label">Total rooms</label><input class="form-control" type="number" min="1" name="total_rooms" value="<?=e($edit['total_rooms']??1)?>"></div><div class="col"><label class="form-label">Available</label><input class="form-control" type="number" min="0" name="available_rooms" value="<?=e($edit['available_rooms']??1)?>"></div></div><?php if($edit):?><div class="mt-2"><select class="form-select" name="status"><option value="active" <?=$edit['status']==='active'?'selected':''?>>Active</option><option value="inactive" <?=$edit['status']==='inactive'?'selected':''?>>Inactive</option></select></div><?php endif;?><button class="btn btn-primary mt-3">Save room</button></form></div></div><div class="col-lg-7"><div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Type</th><th>Capacity</th><th>Price</th><th>Available</th><th></th></tr></thead><tbody><?php foreach($rows as $r):?><tr><td><?=e($r['room_type'])?><br><small><?=status_badge($r['status'])?></small></td><td><?=$r['capacity']?></td><td><?=money($r['price_per_night'])?></td><td><?=$r['available_rooms']?>/<?=$r['total_rooms']?></td><td><a class="btn btn-sm btn-outline-primary" href="?edit=<?=$r['room_id']?>">Edit</a></td></tr><?php endforeach;?></tbody></table></div></div></div></div></div><?php require '../includes/footer.php'; ?>
+<?php require '../includes/auth.php';
+require_role('hotel');
+$hid = get_entity_id('hotel', (int)current_user()['user_id']);
+$errors = [];
+$edit = null;
+if (isset($_GET['edit'])) {
+    $s = db()->prepare('SELECT * FROM rooms WHERE room_id=? AND hotel_id=?');
+    $s->execute([(int)$_GET['edit'], $hid]);
+    $edit = $s->fetch();
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $action = post('action');
+    $rid = (int)post('room_id');
+    if ($action === 'delete') db()->prepare("UPDATE rooms SET status='inactive' WHERE room_id=? AND hotel_id=?")->execute([$rid, $hid]);
+    else {
+        $type = post('room_type');
+        $desc = post('description');
+        $cap = (int)post('capacity');
+        $price = (float)post('price_per_night');
+        $total = (int)post('total_rooms');
+        $available = (int)post('available_rooms');
+        if (!$type || $cap < 1 || $price <= 0 || $total < 1 || $available < 0 || $available > $total) $errors[] = 'Enter valid room values.';
+        else if ($action === 'save') db()->prepare('UPDATE rooms SET room_type=?,description=?,capacity=?,price_per_night=?,total_rooms=?,available_rooms=?,status=? WHERE room_id=? AND hotel_id=?')->execute([$type, $desc, $cap, $price, $total, $available, post('status', 'active'), $rid, $hid]);
+        else db()->prepare('INSERT INTO rooms(hotel_id,room_type,description,capacity,price_per_night,total_rooms,available_rooms) VALUES(?,?,?,?,?,?,?)')->execute([$hid, $type, $desc, $cap, $price, $total, $available]);
+        if (!$errors) {
+            flash('success', 'Room saved.');
+            redirect('hotel/rooms.php');
+        }
+    }
+}
+$s = db()->prepare('SELECT * FROM rooms WHERE hotel_id=? ORDER BY status,room_type');
+$s->execute([$hid]);
+$rows = $s->fetchAll();
+$pageTitle = 'Room management';
+require '../includes/header.php'; ?><div class="container py-5">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card card-body">
+                <h3><?= $edit ? 'Edit room' : 'Add room type' ?></h3><?php foreach ($errors as $e): ?><div class="alert alert-danger"><?= e($e) ?></div><?php endforeach; ?><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="<?= $edit ? 'save' : 'create' ?>"><input type="hidden" name="room_id" value="<?= $edit['room_id'] ?? '' ?>">
+                    <div class="mb-2"><label class="form-label">Room type</label><input class="form-control" name="room_type" required value="<?= e($edit['room_type'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label">Description</label><textarea class="form-control" name="description"><?= e($edit['description'] ?? '') ?></textarea></div>
+                    <div class="row g-2">
+                        <div class="col"><label class="form-label">Capacity</label><input class="form-control" type="number" min="1" name="capacity" value="<?= e($edit['capacity'] ?? 2) ?>"></div>
+                        <div class="col"><label class="form-label">Price/night</label><input class="form-control" type="number" min="1" name="price_per_night" value="<?= e($edit['price_per_night'] ?? '') ?>"></div>
+                    </div>
+                    <div class="row g-2 mt-1">
+                        <div class="col"><label class="form-label">Total rooms</label><input class="form-control" type="number" min="1" name="total_rooms" value="<?= e($edit['total_rooms'] ?? 1) ?>"></div>
+                        <div class="col"><label class="form-label">Available</label><input class="form-control" type="number" min="0" name="available_rooms" value="<?= e($edit['available_rooms'] ?? 1) ?>"></div>
+                    </div><?php if ($edit): ?><div class="mt-2"><select class="form-select" name="status">
+                                <option value="active" <?= $edit['status'] === 'active' ? 'selected' : '' ?>>Active</option>
+                                <option value="inactive" <?= $edit['status'] === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                            </select></div><?php endif; ?><button class="btn btn-primary mt-3">Save room</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Capacity</th>
+                                <th>Price</th>
+                                <th>Available</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody><?php foreach ($rows as $r): ?><tr>
+                                    <td><?= e($r['room_type']) ?><br><small><?= status_badge($r['status']) ?></small></td>
+                                    <td><?= $r['capacity'] ?></td>
+                                    <td><?= money($r['price_per_night']) ?></td>
+                                    <td><?= $r['available_rooms'] ?>/<?= $r['total_rooms'] ?></td>
+                                    <td><a class="btn btn-sm btn-outline-primary" href="?edit=<?= $r['room_id'] ?>">Edit</a></td>
+                                </tr><?php endforeach; ?></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><?php require '../includes/footer.php'; ?>

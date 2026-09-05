@@ -1,1 +1,70 @@
-<?php require '../includes/auth.php';require_role('admin');$errors=[];if($_SERVER['REQUEST_METHOD']==='POST'){verify_csrf();$action=post('action');$id=(int)post('hotel_id');if($action==='status'){db()->prepare('UPDATE hotels SET status=? WHERE hotel_id=?')->execute([post('status'),$id]);flash('success','Hotel status updated.');redirect('admin/hotels.php');}if($action==='create'){$name=post('hotel_name');$email=strtolower(post('email'));$pass=$_POST['password']??'';$city=post('city');$address=post('address');$phone=post('phone');if(!$name||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($pass)<8||!$city||!$address||!$phone)$errors[]='Complete valid hotel account details; password must be 8+ characters.';else try{$pdo=db();$pdo->beginTransaction();$pdo->prepare("INSERT INTO users(name,email,password_hash,role,status) VALUES(?,?,?,'hotel','active')")->execute([$name,$email,password_hash($pass,PASSWORD_DEFAULT)]);$uid=$pdo->lastInsertId();$pdo->prepare("INSERT INTO hotels(user_id,hotel_name,address,city,phone,email,status) VALUES(?,?,?,?,?,?,'active')")->execute([$uid,$name,$address,$city,$phone,$email]);$pdo->commit();flash('success','Hotel account created.');redirect('admin/hotels.php');}catch(Throwable $e){if(db()->inTransaction())db()->rollBack();$errors[]='Unable to create hotel; email may already exist.';}}}$rows=db()->query('SELECT h.*,u.status user_status FROM hotels h LEFT JOIN users u ON u.user_id=h.user_id ORDER BY h.created_at DESC')->fetchAll();$pageTitle='Hotel management';require '../includes/header.php';?><div class="container py-5"><div class="row g-4"><div class="col-lg-4"><div class="card card-body"><h4>Create hotel account</h4><?php foreach($errors as $e):?><div class="alert alert-danger"><?=e($e)?></div><?php endforeach;?><form method="post"><?=csrf_field()?><input type="hidden" name="action" value="create"><?php foreach(['hotel_name'=>'Hotel name','email'=>'Email','password'=>'Temporary password','city'=>'City','address'=>'Address','phone'=>'Phone'] as $f=>$l):?><input class="form-control mb-2" name="<?=$f?>" placeholder="<?=$l?>" <?=$f==='password'?'type="password"':''?> required><?php endforeach;?><button class="btn btn-primary">Create hotel</button></form></div></div><div class="col-lg-8"><div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Hotel</th><th>Location</th><th>Status</th><th></th></tr></thead><tbody><?php foreach($rows as $r):?><tr><td><?=e($r['hotel_name'])?><br><small><?=e($r['email'])?></small></td><td><?=e($r['city'])?></td><td><?=status_badge($r['status'])?></td><td><form method="post" class="d-flex gap-1"><?=csrf_field()?><input name="action" value="status" type="hidden"><input name="hotel_id" value="<?=$r['hotel_id']?>" type="hidden"><select class="form-select form-select-sm" name="status"><?php foreach(['pending','active','inactive','rejected'] as $x):?><option <?=$r['status']===$x?'selected':''?>><?=$x?></option><?php endforeach;?></select><button class="btn btn-sm btn-primary">Save</button></form></td></tr><?php endforeach;?></tbody></table></div></div></div></div></div><?php require '../includes/footer.php'; ?>
+<?php require '../includes/auth.php';
+require_role('admin');
+$errors = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $action = post('action');
+    $id = (int)post('hotel_id');
+    if ($action === 'status') {
+        db()->prepare('UPDATE hotels SET status=? WHERE hotel_id=?')->execute([post('status'), $id]);
+        flash('success', 'Hotel status updated.');
+        redirect('admin/hotels.php');
+    }
+    if ($action === 'create') {
+        $name = post('hotel_name');
+        $email = strtolower(post('email'));
+        $pass = $_POST['password'] ?? '';
+        $city = post('city');
+        $address = post('address');
+        $phone = post('phone');
+        if (!$name || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($pass) < 8 || !$city || !$address || !$phone) $errors[] = 'Complete valid hotel account details; password must be 8+ characters.';
+        else try {
+            $pdo = db();
+            $pdo->beginTransaction();
+            $pdo->prepare("INSERT INTO users(name,email,password_hash,role,status) VALUES(?,?,?,'hotel','active')")->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT)]);
+            $uid = $pdo->lastInsertId();
+            $pdo->prepare("INSERT INTO hotels(user_id,hotel_name,address,city,phone,email,status) VALUES(?,?,?,?,?,?,'active')")->execute([$uid, $name, $address, $city, $phone, $email]);
+            $pdo->commit();
+            flash('success', 'Hotel account created.');
+            redirect('admin/hotels.php');
+        } catch (Throwable $e) {
+            if (db()->inTransaction()) db()->rollBack();
+            $errors[] = 'Unable to create hotel; email may already exist.';
+        }
+    }
+}
+$rows = db()->query('SELECT h.*,u.status user_status FROM hotels h LEFT JOIN users u ON u.user_id=h.user_id ORDER BY h.created_at DESC')->fetchAll();
+$pageTitle = 'Hotel management';
+require '../includes/header.php'; ?><div class="container py-5">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card card-body">
+                <h4>Create hotel account</h4><?php foreach ($errors as $e): ?><div class="alert alert-danger"><?= e($e) ?></div><?php endforeach; ?><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="create"><?php foreach (['hotel_name' => 'Hotel name', 'email' => 'Email', 'password' => 'Temporary password', 'city' => 'City', 'address' => 'Address', 'phone' => 'Phone'] as $f => $l): ?><input class="form-control mb-2" name="<?= $f ?>" placeholder="<?= $l ?>" <?= $f === 'password' ? 'type="password"' : '' ?> required><?php endforeach; ?><button class="btn btn-primary">Create hotel</button></form>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Hotel</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody><?php foreach ($rows as $r): ?><tr>
+                                    <td><?= e($r['hotel_name']) ?><br><small><?= e($r['email']) ?></small></td>
+                                    <td><?= e($r['city']) ?></td>
+                                    <td><?= status_badge($r['status']) ?></td>
+                                    <td>
+                                        <form method="post" class="d-flex gap-1"><?= csrf_field() ?><input name="action" value="status" type="hidden"><input name="hotel_id" value="<?= $r['hotel_id'] ?>" type="hidden"><select class="form-select form-select-sm" name="status"><?php foreach (['pending', 'active', 'inactive', 'rejected'] as $x): ?><option <?= $r['status'] === $x ? 'selected' : '' ?>><?= $x ?></option><?php endforeach; ?></select><button class="btn btn-sm btn-primary">Save</button></form>
+                                    </td>
+                                </tr><?php endforeach; ?></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><?php require '../includes/footer.php'; ?>

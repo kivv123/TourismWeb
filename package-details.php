@@ -1,1 +1,41 @@
-<?php require 'includes/header.php';$id=(int)($_GET['id']??0);$s=db()->prepare("SELECT p.*,d.name destination_name,d.city,d.region FROM packages p JOIN destinations d ON d.destination_id=p.destination_id WHERE p.package_id=? AND p.status='active'");$s->execute([$id]);$p=$s->fetch();if(!$p){http_response_code(404);exit('Package not found.');}$pageTitle=$p['package_name'];?><section class="detail-hero"><div class="container"><p><?=e($p['destination_name'])?> · <?=e($p['city'])?></p><h1><?=e($p['package_name'])?></h1><p class="lead"><?=e($p['description'])?></p></div></section><div class="container py-5"><div class="row g-4"><article class="col-lg-8"><h3>Itinerary</h3><p><?=nl2br(e($p['itinerary']?:'A carefully planned local experience.'))?></p><div class="row"><div class="col-md-6"><h5>Included</h5><p><?=nl2br(e($p['included_services']?:'See booking details.'))?></p></div><div class="col-md-6"><h5>Not included</h5><p><?=nl2br(e($p['excluded_services']?:'Personal expenses.'))?></p></div></div></article><aside class="col-lg-4"><div class="card card-body booking-summary"><p class="text-muted mb-1"><?=e($p['duration_days'])?> days / <?=e($p['duration_nights'])?> nights</p><h3 class="text-primary"><?=money($p['price_per_person'])?> <small class="fs-6 text-muted">per person</small></h3><p>Maximum <?=e($p['max_travelers'])?> travelers</p><a class="btn btn-warning w-100" href="<?=url('booking.php?package_id='.$p['package_id'])?>">Book this package</a></div></aside></div></div><?php require 'includes/footer.php'; ?>
+<?php require 'includes/header.php';
+$id = (int)($_GET['id'] ?? 0);
+$s = db()->prepare("SELECT p.*,d.name destination_name,d.city,d.region FROM packages p JOIN destinations d ON d.destination_id=p.destination_id WHERE p.package_id=? AND p.status='active'");
+$s->execute([$id]);
+$p = $s->fetch();
+if (!$p) {
+    http_response_code(404);
+    exit('Package not found.');
+}
+$pageTitle = $p['package_name']; ?><section class="detail-hero">
+    <div class="container">
+        <p><?= e($p['destination_name']) ?> · <?= e($p['city']) ?></p>
+        <h1><?= e($p['package_name']) ?></h1>
+        <p class="lead"><?= e($p['description']) ?></p>
+    </div>
+</section>
+<div class="container py-5">
+    <div class="row g-4">
+        <article class="col-lg-8">
+            <h3>Itinerary</h3>
+            <p><?= nl2br(e($p['itinerary'] ?: 'A carefully planned local experience.')) ?></p>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Included</h5>
+                    <p><?= nl2br(e($p['included_services'] ?: 'See booking details.')) ?></p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Not included</h5>
+                    <p><?= nl2br(e($p['excluded_services'] ?: 'Personal expenses.')) ?></p>
+                </div>
+            </div>
+        </article>
+        <aside class="col-lg-4">
+            <div class="card card-body booking-summary">
+                <p class="text-muted mb-1"><?= e($p['duration_days']) ?> days / <?= e($p['duration_nights']) ?> nights</p>
+                <h3 class="text-primary"><?= money($p['price_per_person']) ?> <small class="fs-6 text-muted">per person</small></h3>
+                <p>Maximum <?= e($p['max_travelers']) ?> travelers</p><a class="btn btn-warning w-100" href="<?= url('booking.php?package_id=' . $p['package_id']) ?>">Book this package</a>
+            </div>
+        </aside>
+    </div>
+</div><?php require 'includes/footer.php'; ?>
