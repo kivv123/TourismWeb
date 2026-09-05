@@ -129,4 +129,6 @@ require '../includes/header.php';
     
 
 </div>
+<?php require '../includes/footer.php';  //hi this is a change made by zth
+?>
 
