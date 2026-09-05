@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 // Change only if you install the folder under a different htdocs name.
-const BASE_URL = '/TourismWeb-1';
+const BASE_URL = '/TourismWeb';
 // Update these values only if your local XAMPP MySQL configuration differs.
 const DB_HOST = '127.0.0.1';
 const DB_NAME = 'tourism_db';
