@@ -61,17 +61,57 @@ function status_badge(string $status): string
 }
 function upload_image(string $field, string $folder): ?string
 {
-    if (empty($_FILES[$field]['name']) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) return null;
-    $f = $_FILES[$field];
-    if ($f['error'] !== UPLOAD_ERR_OK || $f['size'] > 3 * 1024 * 1024) throw new RuntimeException('Image upload failed or exceeds 3 MB.');
-    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($f['tmp_name']);
-    $types = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    if (!isset($types[$mime])) throw new RuntimeException('Only JPG, PNG and WEBP images are allowed.');
-    $relative = 'uploads/' . $folder . '/' . bin2hex(random_bytes(16)) . '.' . $types[$mime];
-    $destination = __DIR__ . '/../' . $relative;
-    if (!move_uploaded_file($f['tmp_name'], $destination)) throw new RuntimeException('Unable to save image.');
-    return $relative;
+    if (
+        empty($_FILES[$field]['name']) ||
+        $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE
+    ) {
+        return null;
+    }
+
+    $file = $_FILES[$field];
+
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('Image upload failed.');
+    }
+
+    if ($file['size'] > 3 * 1024 * 1024) {
+        throw new RuntimeException('Image must not exceed 3 MB.');
+    }
+
+    $mimeType = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+
+    $allowedTypes = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp'
+    ];
+
+    if (!isset($allowedTypes[$mimeType])) {
+        throw new RuntimeException('Only JPG, PNG, and WEBP images are allowed.');
+    }
+
+    $uploadDirectory = __DIR__ . '/../uploads/' . $folder . '/';
+
+    if (!is_dir($uploadDirectory)) {
+        if (!mkdir($uploadDirectory, 0755, true) && !is_dir($uploadDirectory)) {
+            throw new RuntimeException('Unable to create the image upload folder.');
+        }
+    }
+
+    if (!is_writable($uploadDirectory)) {
+        throw new RuntimeException('The image upload folder is not writable.');
+    }
+
+    $filename = bin2hex(random_bytes(16)) . '.' . $allowedTypes[$mimeType];
+    $destination = $uploadDirectory . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $destination)) {
+        throw new RuntimeException('Unable to save image.');
+    }
+
+    return 'uploads/' . $folder . '/' . $filename;
 }
+
 function get_entity_id(string $role, int $userId): ?int
 {
     $table = $role === 'customer' ? 'customers' : ($role === 'driver' ? 'drivers' : 'hotels');
