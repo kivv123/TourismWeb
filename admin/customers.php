@@ -1,0 +1,47 @@
+<?php require '../includes/auth.php';
+require_role('admin');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $id = (int)post('user_id');
+    $status = post('status');
+    if (in_array($status, ['active', 'inactive'], true)) db()->prepare('UPDATE users SET status=? WHERE user_id=? AND role=\'customer\'')->execute([$status, $id]);
+    redirect('admin/customers.php');
+}
+$q = trim($_GET['q'] ?? '');
+$s = db()->prepare("SELECT u.*,c.phone,c.address FROM users u JOIN customers c ON c.user_id=u.user_id WHERE u.role='customer' AND (u.name LIKE ? OR u.email LIKE ?) ORDER BY u.created_at DESC");
+$s->execute(["%$q%", "%$q%"]);
+$rows = $s->fetchAll();
+$pageTitle = 'Customer management';
+require '../includes/header.php'; ?><div class="container py-5">
+    <h2>Customers</h2>
+    <form class="mb-3">
+        <div class="input-group"><input class="form-control" name="q" placeholder="Search customer" value="<?= e($q) ?>"><button class="btn btn-outline-primary">Search</button></div>
+    </form>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Contact</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody><?php foreach ($rows as $r): ?><tr>
+                            <td><?= e($r['name']) ?><br><small><?= e($r['email']) ?></small></td>
+                            <td><?= e($r['phone']) ?></td>
+                            <td><?= e($r['address']) ?></td>
+                            <td><?= status_badge($r['status']) ?></td>
+                            <td>
+                                <form method="post" class="d-flex gap-1"><?= csrf_field() ?><input type="hidden" name="user_id" value="<?= $r['user_id'] ?>"><select class="form-select form-select-sm" name="status">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select><button class="btn btn-sm btn-primary">Save</button></form>
+                            </td>
+                        </tr><?php endforeach; ?></tbody>
+            </table>
+        </div>
+    </div>
+</div><?php require '../includes/footer.php'; ?>

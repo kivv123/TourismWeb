@@ -1,0 +1,16 @@
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("form.needs-validation").forEach((f) =>
+    f.addEventListener("submit", (e) => {
+      if (!f.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      f.classList.add("was-validated");
+    }),
+  );
+  const s = document.querySelector("[data-confirm]");
+  if (s)
+    s.addEventListener("click", (e) => {
+      if (!confirm(s.dataset.confirm)) e.preventDefault();
+    });
+});

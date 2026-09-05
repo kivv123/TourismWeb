@@ -1,0 +1,79 @@
+<?php require '../includes/auth.php';
+require_role('admin');
+$edit = null;
+$errors = [];
+if (isset($_GET['edit'])) {
+    $s = db()->prepare('SELECT * FROM packages WHERE package_id=?');
+    $s->execute([(int)$_GET['edit']]);
+    $edit = $s->fetch();
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $action = post('action');
+    $id = (int)post('id');
+    if ($action === 'deactivate') db()->prepare("UPDATE packages SET status='inactive' WHERE package_id=?")->execute([$id]);
+    else {
+        $dest = (int)post('destination_id');
+        $name = post('package_name');
+        $description = post('description');
+        $days = (int)post('duration_days');
+        $nights = (int)post('duration_nights');
+        $price = (float)post('price_per_person');
+        $max = (int)post('max_travelers');
+        $type = post('package_type');
+        if (!$dest || !$name || !$description || $days < 1 || $nights < 0 || $price <= 0 || $max < 1 || !$type) $errors[] = 'Complete valid package details.';
+        else {
+            try {
+                $image = upload_image('image', 'packages') ?: ($edit['image'] ?? null);
+                $data = [$dest, $name, $description, $days, $nights, $price, $max, $type, post('included_services'), post('excluded_services'), post('itinerary'), $image, post('status', 'active')];
+                if ($action === 'save') {
+                    $data[] = $id;
+                    db()->prepare('UPDATE packages SET destination_id=?,package_name=?,description=?,duration_days=?,duration_nights=?,price_per_person=?,max_travelers=?,package_type=?,included_services=?,excluded_services=?,itinerary=?,image=?,status=? WHERE package_id=?')->execute($data);
+                } else db()->prepare('INSERT INTO packages(destination_id,package_name,description,duration_days,duration_nights,price_per_person,max_travelers,package_type,included_services,excluded_services,itinerary,image,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)')->execute($data);
+                flash('success', 'Package saved.');
+                redirect('admin/packages.php');
+            } catch (Throwable $e) {
+                $errors[] = $e->getMessage();
+            }
+        }
+    }
+}
+$dests = db()->query("SELECT destination_id,name FROM destinations WHERE status='active' ORDER BY name")->fetchAll();
+$rows = db()->query('SELECT p.*,d.name destination_name FROM packages p JOIN destinations d ON d.destination_id=p.destination_id ORDER BY p.created_at DESC')->fetchAll();
+$pageTitle = 'Package management';
+require '../includes/header.php'; ?><div class="container py-5">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card card-body">
+                <h3><?= $edit ? 'Edit' : 'Add' ?> package</h3><?php foreach ($errors as $e): ?><div class="alert alert-danger"><?= e($e) ?></div><?php endforeach; ?><form method="post" enctype="multipart/form-data"><?= csrf_field() ?><input type="hidden" name="action" value="<?= $edit ? 'save' : 'create' ?>"><input type="hidden" name="id" value="<?= $edit['package_id'] ?? '' ?>"><select class="form-select mb-2" name="destination_id" required>
+                        <option value="">Destination</option><?php foreach ($dests as $d): ?><option value="<?= $d['destination_id'] ?>" <?= ($edit['destination_id'] ?? 0) == $d['destination_id'] ? 'selected' : '' ?>><?= e($d['name']) ?></option><?php endforeach; ?>
+                    </select><?php foreach (['package_name' => 'Package name', 'duration_days' => 'Days', 'duration_nights' => 'Nights', 'price_per_person' => 'Price per person', 'max_travelers' => 'Max travelers', 'package_type' => 'Package type'] as $f => $l): ?><input class="form-control mb-2" name="<?= $f ?>" placeholder="<?= $l ?>" value="<?= e($edit[$f] ?? '') ?>" required><?= $f === 'package_name' ? '' : '' ?><?php endforeach; ?><textarea class="form-control mb-2" name="description" placeholder="Description" required><?= e($edit['description'] ?? '') ?></textarea><textarea class="form-control mb-2" name="included_services" placeholder="Included services"><?= e($edit['included_services'] ?? '') ?></textarea><textarea class="form-control mb-2" name="excluded_services" placeholder="Excluded services"><?= e($edit['excluded_services'] ?? '') ?></textarea><textarea class="form-control mb-2" name="itinerary" placeholder="Itinerary"><?= e($edit['itinerary'] ?? '') ?></textarea><input type="file" class="form-control mb-2" name="image" accept="image/png,image/jpeg,image/webp"><select name="status" class="form-select mb-2">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select><button class="btn btn-primary">Save package</button></form>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Destination</th>
+                                <th>Price</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody><?php foreach ($rows as $r): ?><tr>
+                                    <td><?= e($r['package_name']) ?><br><?= status_badge($r['status']) ?></td>
+                                    <td><?= e($r['destination_name']) ?></td>
+                                    <td><?= money($r['price_per_person']) ?></td>
+                                    <td><a class="btn btn-sm btn-outline-primary" href="?edit=<?= $r['package_id'] ?>">Edit</a></td>
+                                </tr><?php endforeach; ?></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><?php require '../includes/footer.php'; ?>
