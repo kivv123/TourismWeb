@@ -325,6 +325,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $bookingId =
             (int) $pdo->lastInsertId();
+        $receiptToken = bin2hex(random_bytes(32));
+
+        $updateReceiptToken = $pdo->prepare(
+            "UPDATE bookings
+            SET receipt_token = ?
+            WHERE booking_id = ?"
+        );
+
+        $updateReceiptToken->execute([
+            $receiptToken,
+            $bookingId
+        ]);
 
         /*
          * Reserve room inventory only after the booking record

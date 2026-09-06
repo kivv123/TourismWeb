@@ -45,3 +45,8 @@ INSERT INTO rooms(hotel_id,room_type,description,capacity,price_per_night,total_
 -- Initial admin: generate a secure hash with PHP then replace PLACEHOLDER_HASH before import:
 -- php -r "echo password_hash('your-new-password', PASSWORD_DEFAULT);"
 -- INSERT INTO users(name,email,password_hash,role,status) VALUES ('System Admin','admin@example.com','PASTE_HASH_HERE','admin','active');
+
+-- receipt column added 
+ALTER TABLE bookings
+ADD COLUMN receipt_token VARCHAR(64) NULL UNIQUE
+AFTER booking_id; 
