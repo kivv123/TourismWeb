@@ -11,12 +11,15 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    min-height: 100dvh
+    min-height: 100dvh;
+    margin: 0;
 }
+
+
 
 main {
     flex: 1 0 auto;
-    padding-bottom: 3rem
+     padding-bottom: 0 !important;
 }
 
 .nav-glass {
@@ -95,7 +98,7 @@ main {
 .footer {
     background: #082f49;
     color: #fff;
-    margin-top: auto;
+    margin-top: 0 !important;
 }
 
 .footer a {
@@ -135,5 +138,156 @@ main {
 
     .hero h1 {
         font-size: 2.8rem
+    }
+}
+
+.chart-container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Dashboard Sidebar */
+
+.dashboard-sidebar {
+    width: 250px;
+    min-height: calc(100vh - 70px);
+    background: #fff;
+    border-right: 1px solid #d9dee3;
+    padding: 8px 0;
+}
+
+.dashboard-menu {
+    width: 100%;
+}
+
+.dashboard-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 13px 22px;
+
+    color: #343a40;
+    text-decoration: none;
+
+    font-size: 1.05rem;
+    font-weight: 400;
+
+    transition: background-color .15s ease,
+                color .15s ease;
+}
+
+.dashboard-menu-item i {
+    width: 20px;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.dashboard-menu-item:hover {
+    background: #f1f3f5;
+    color: var(--ocean);
+}
+
+.dashboard-menu-item.active {
+    background: #e6fffb;
+    color: var(--teal);
+    font-weight: 500;
+}
+
+.dashboard-menu-divider {
+    height: 1px;
+    background: #d9dee3;
+    margin: 8px 0;
+}
+/* Dashboard Layout */
+
+.dashboard-layout {
+    display: flex;
+    flex: 1; /* This is the key: it pushes the footer to the bottom */
+    align-items: stretch; /* Forces sidebar and content to same height */
+    gap: 0;
+    flex: 1; /* This ensures it pushes the footer down */
+}
+
+.dashboard-sidebar {
+    width: 250px;
+    min-width: 250px;
+    background: #fff;
+    border-right: 1px solid #d9dee3;
+    padding: 8px 0;
+    /* Remove min-height: calc(100vh - 70px); */
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-content {
+    flex: 1;
+    min-width: 0;
+    padding: 30px;
+    background: #f7fafc; /* Matches your body background */
+}
+
+/* Sidebar */
+
+.dashboard-menu {
+    width: 100%;
+}
+
+.dashboard-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 22px;
+
+    color: #343a40;
+    text-decoration: none;
+
+    font-size: 1.05rem;
+    font-weight: 400;
+
+    transition:
+        background-color .15s ease,
+        color .15s ease;
+}
+
+.dashboard-menu-item i {
+    width: 20px;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.dashboard-menu-item:hover {
+    background: #f1f3f5;
+    color: var(--ocean);
+}
+
+.dashboard-menu-item.active {
+    background: #e6fffb;
+    color: var(--teal);
+    font-weight: 500;
+}
+
+.dashboard-menu-divider {
+    height: 1px;
+    background: #d9dee3;
+    margin: 8px 0;
+}
+
+/* Dashboard Mobile */
+
+/* 4. Fix Mobile View */
+@media (max-width: 991px) {
+    .dashboard-layout {
+        flex-direction: column;
+        display: block; /* Allow normal flow on mobile */
+    }
+
+    .dashboard-sidebar {
+        width: 100%;
+        min-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #d9dee3;
     }
 }

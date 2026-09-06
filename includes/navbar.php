@@ -65,7 +65,7 @@
                                 <li><a class="dropdown-item" href="<?= url('hotel/profile.php') ?>"><i class="bi bi-building me-2"></i>Hotel Profile</a></li>
                             </ul>
                         </li>
-                    <?php endif; ?>
+                    <?php endif; ?> 
 
                     <li class="nav-item">
                         <a class="nav-link" href="<?= url(dashboard_path(current_user()['role'])) ?>">Dashboard</a>
