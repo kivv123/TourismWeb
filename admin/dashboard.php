@@ -167,7 +167,6 @@ require '../includes/header.php';
                         </div>
                     </div>
 
-                    <!-- KEEP ALL YOUR EXISTING CONTENT BELOW -->
 
                     <div class="row g-3 mb-4">
                         <?php foreach ($stats as $label => $value): ?>
