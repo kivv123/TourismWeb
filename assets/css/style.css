@@ -7,7 +7,16 @@
 
 body {
     background: #f7fafc;
-    color: var(--ink)
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh
+}
+
+main {
+    flex: 1 0 auto;
+    padding-bottom: 3rem
 }
 
 .nav-glass {
@@ -86,6 +95,7 @@ body {
 .footer {
     background: #082f49;
     color: #fff;
+    margin-top: auto;
 }
 
 .footer a {
@@ -127,4 +137,3 @@ body {
         font-size: 2.8rem
     }
 }
-
