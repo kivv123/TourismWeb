@@ -45,6 +45,7 @@ INSERT INTO rooms(hotel_id,room_type,description,capacity,price_per_night,total_
 -- Initial admin: generate a secure hash with PHP then replace PLACEHOLDER_HASH before import:
 -- php -r "echo password_hash('your-new-password', PASSWORD_DEFAULT);"
 -- INSERT INTO users(name,email,password_hash,role,status) VALUES ('System Admin','admin@example.com','PASTE_HASH_HERE','admin','active');
+<<<<<<< HEAD
 USE tourism_db;
 
 ALTER TABLE users
@@ -52,3 +53,10 @@ ALTER TABLE users
 
 -- If you have already run this migration, the statement fails with
 -- "Duplicate column name" - that is harmless; skip this file.
+=======
+
+-- receipt column added 
+ALTER TABLE bookings
+ADD COLUMN receipt_token VARCHAR(64) NULL UNIQUE
+AFTER booking_id; 
+>>>>>>> ed8399bf558abd526a82332789ed95d8dda12e4b
