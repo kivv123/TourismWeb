@@ -5,8 +5,8 @@ if (logged_in()) {
     redirect(dashboard_path(current_user()['role']));
 }
 
-$error = '';
-$email = '';
+ $error = '';
+ $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
 
     $stmt = db()->prepare(
-        'SELECT user_id, name, email, password_hash, role, status
+        'SELECT user_id, name, email, password_hash, role, status, must_change_password
          FROM users
          WHERE email = ?'
     );
@@ -34,6 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $_SESSION['user'] = $user;
 
+        // First login with admin-issued temporary credentials:
+        // force the hotel to set its own password before anything else.
+        if (!empty($user['must_change_password']) && $user['role'] === 'hotel') {
+            redirect('hotel/change-password.php');
+        }
+
         // Role comes from MySQL, never from the login form.
         redirect(dashboard_path($user['role']));
     }
@@ -41,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $error = 'Invalid email/password, or this account is not active.';
 }
 
-$pageTitle = 'Login';
+ $pageTitle = 'Login';
 require 'includes/header.php';
 ?>
 

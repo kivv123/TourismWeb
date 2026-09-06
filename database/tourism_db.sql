@@ -45,3 +45,10 @@ INSERT INTO rooms(hotel_id,room_type,description,capacity,price_per_night,total_
 -- Initial admin: generate a secure hash with PHP then replace PLACEHOLDER_HASH before import:
 -- php -r "echo password_hash('your-new-password', PASSWORD_DEFAULT);"
 -- INSERT INTO users(name,email,password_hash,role,status) VALUES ('System Admin','admin@example.com','PASTE_HASH_HERE','admin','active');
+USE tourism_db;
+
+ALTER TABLE users
+  ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0 AFTER status;
+
+-- If you have already run this migration, the statement fails with
+-- "Duplicate column name" - that is harmless; skip this file.

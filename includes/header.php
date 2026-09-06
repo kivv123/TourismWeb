@@ -1,5 +1,5 @@
 <?php require_once __DIR__ . '/auth.php';
-$pageTitle = $pageTitle ?? 'Myanmar Horizons'; ?>
+ $pageTitle = $pageTitle ?? 'Myanmar Horizons'; ?>
 <!doctype html>
 <html lang="en">
 
@@ -20,4 +20,7 @@ $pageTitle = $pageTitle ?? 'Myanmar Horizons'; ?>
             </div><?php endif;
                 if ($m = flash('error')): ?><div class="container pt-3">
                 <div class="alert alert-danger"><?= e($m) ?></div>
+            </div><?php endif;
+                if ($m = flash('warning')): ?><div class="container pt-3">
+                <div class="alert alert-warning"><?= e($m) ?></div>
             </div><?php endif; ?>
