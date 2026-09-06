@@ -179,8 +179,14 @@ require '../includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Line Revenue Chart
+    // 1. Line Revenue Chart with Progressive Animation
     const revCtx = document.getElementById('revenueChart').getContext('2d');
+    
+    // Animation configuration for the line chart
+    const totalDuration = 2000;
+    const delayBetweenPoints = totalDuration / 12;
+    const previousY = (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(100) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
+
     new Chart(revCtx, {
         type: 'line',
         data: {
@@ -200,6 +206,30 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animations: {
+                x: {
+                    type: 'number',
+                    easing: 'linear',
+                    duration: delayBetweenPoints,
+                    from: NaN, 
+                    delay(ctx) {
+                        if (ctx.type !== 'data' || ctx.xStarted) return 0;
+                        ctx.xStarted = true;
+                        return ctx.index * delayBetweenPoints;
+                    }
+                },
+                y: {
+                    type: 'number',
+                    easing: 'linear',
+                    duration: delayBetweenPoints,
+                    from: previousY,
+                    delay(ctx) {
+                        if (ctx.type !== 'data' || ctx.yStarted) return 0;
+                        ctx.yStarted = true;
+                        return ctx.index * delayBetweenPoints;
+                    }
+                }
+            },
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
@@ -208,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 2. Bar Occupancy Chart
+    // 2. Bar Occupancy Chart with Delayed Stagger Animation
     const occCtx = document.getElementById('occupancyChart').getContext('2d');
     new Chart(occCtx, {
         type: 'bar',
@@ -223,6 +253,15 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                delay: (context) => {
+                    let delay = 0;
+                    if (context.type === 'data' && context.mode === 'default') {
+                        delay = context.dataIndex * 300; // 300ms delay between each bar
+                    }
+                    return delay;
+                },
+            },
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
