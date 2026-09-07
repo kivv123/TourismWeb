@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const revCtx = document.getElementById('revenueChart').getContext('2d');
     
     // Animation configuration for the line chart
-    const totalDuration = 2000;
+    const totalDuration = 200;
     const delayBetweenPoints = totalDuration / 12;
     const previousY = (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(100) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
 
@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 delay: (context) => {
                     let delay = 0;
                     if (context.type === 'data' && context.mode === 'default') {
-                        delay = context.dataIndex * 300; // 300ms delay between each bar
+                        delay = context.dataIndex * 20; // 300ms delay between each bar
                     }
                     return delay;
                 },
