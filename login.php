@@ -105,10 +105,16 @@ require 'includes/header.php';
                         </button>
                     </form>
 
-                    <p class="mt-3 mb-0">
+                    <p class="mt-3 mb-2">
                         New user?
                         <a href="<?= url('register.php') ?>">
                             Create an account
+                        </a>
+                    </p>
+
+                    <p class="mb-0">
+                        <a href="<?= url('forgot-password.php') ?>" class="small">
+                            Forgot Password?
                         </a>
                     </p>
                 </div>

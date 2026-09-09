@@ -123,6 +123,11 @@ if (!function_exists('build_smtp_mailer')) {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         } elseif ($encryption === 'ssl') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            // Explicitly unencrypted (local development sinks): disable
+            // PHPMailer's automatic STARTTLS upgrade, which would fail
+            // against a plain local relay.
+            $mail->SMTPAutoTLS = false;
         }
 
         $from = trim((string) ($c['from_email'] ?? ''));
@@ -290,6 +295,61 @@ HTML;
             . "For security reasons, please change your password after your first login.\n"
             . "You will be asked to set a new password as soon as you sign in.\n\n"
             . "Thank you,\nMyanmar Horizons";
+
+        return send_email($toEmail, $subject, $html, $text);
+    }
+}
+
+if (!function_exists('send_password_reset_otp_email')) {
+    /**
+     * Password reset OTP (customer forgot-password flow).
+     * Contains the application name, the 6-digit code, the expiry time
+     * and a security warning. NEVER contains the user's password.
+     */
+    function send_password_reset_otp_email(string $toEmail, string $code): bool
+    {
+        $hCode = htmlspecialchars($code, ENT_QUOTES, 'UTF-8');
+
+        $subject = 'Your Password Reset Code';
+
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background-color:#f4f6f9;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,0.08);">
+        <tr><td style="background-color:#075985;padding:24px 32px;">
+          <span style="color:#ffffff;font-size:20px;font-weight:bold;">Myanmar Horizons</span>
+        </td></tr>
+        <tr><td style="padding:32px;text-align:center;">
+          <h2 style="margin:0 0 16px;color:#0f172a;font-size:20px;">Password Reset Code</h2>
+          <p style="margin:0 0 24px;color:#334155;font-size:15px;line-height:1.6;">We received a request to reset the password for your account. Enter the verification code below to continue. The code expires in 5 minutes.</p>
+          <p style="margin:0 0 24px;">
+            <span style="display:inline-block;background-color:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:14px 28px;font-size:28px;font-weight:bold;letter-spacing:8px;color:#075985;font-family:Consolas,monospace;">{$hCode}</span>
+          </p>
+          <p style="margin:0 0 8px;color:#334155;font-size:14px;line-height:1.6;"><strong>Security warning:</strong> this code is single-use and was sent only to you. Myanmar Horizons staff will never ask you for this code.</p>
+          <p style="margin:0;color:#94a3b8;font-size:12px;">If you did not request a password reset, you can safely ignore this email - your current password remains unchanged.</p>
+        </td></tr>
+        <tr><td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;padding:16px 32px;">
+          <p style="margin:0;color:#94a3b8;font-size:12px;">This is an automated message from the Myanmar Horizons account system. Please do not reply.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+HTML;
+
+        $text = "Hello,\n\n"
+            . "We received a request to reset the password for your Myanmar Horizons account.\n\n"
+            . "Your password reset code is: {$code}\n\n"
+            . "The code expires in 5 minutes and can be used only once.\n\n"
+            . "Security warning: Myanmar Horizons staff will never ask you for this code.\n"
+            . "If you did not request a password reset, you can safely ignore this email -\n"
+            . "your current password remains unchanged.\n\n"
+            . "Myanmar Horizons";
 
         return send_email($toEmail, $subject, $html, $text);
     }

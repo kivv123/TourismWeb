@@ -60,3 +60,23 @@ ALTER TABLE bookings
 ADD COLUMN receipt_token VARCHAR(64) NULL UNIQUE
 AFTER booking_id; 
 >>>>>>> ed8399bf558abd526a82332789ed95d8dda12e4b
+
+
+-- Phone OTP
+CREATE TABLE IF NOT EXISTS password_resets (
+    reset_id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT UNSIGNED NOT NULL,
+    delivery_method ENUM('phone','email') NOT NULL,
+    destination     VARCHAR(190) NOT NULL,
+    otp_hash        VARCHAR(255) NOT NULL,
+    expires_at      DATETIME NOT NULL,
+    attempts        TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    status          ENUM('pending','verified','used','invalidated') NOT NULL DEFAULT 'pending',
+    flow_token_hash CHAR(64) NULL,
+    ip_hash         CHAR(64) NULL,
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    verified_at     DATETIME NULL,
+    used_at         DATETIME NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_pr_user_status (user_id, status, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
